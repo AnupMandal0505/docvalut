@@ -1,0 +1,14 @@
+{# Generic confirm modal used by UI.modal.confirm(). Pages may add their own modals. #}
+<div class="modal-backdrop" id="modal-confirm" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal__header">
+      <h2 class="modal__title">Are you sure?</h2>
+      <button class="btn btn--ghost btn--icon btn--sm" data-modal-close aria-label="Close"><i data-icon="x"></i></button>
+    </div>
+    <div class="modal__body"></div>
+    <div class="modal__footer">
+      <button class="btn" data-modal-close>Cancel</button>
+      <button class="btn btn--primary" data-confirm-ok>Confirm</button>
+    </div>
+  </div>
+</div>

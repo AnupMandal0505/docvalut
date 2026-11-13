@@ -9,18 +9,18 @@ from django.db import transaction
 from django.conf import settings
 from urllib.parse import unquote
 
-def ApiVersionn(request):
-    """
-    To check the API version
-    """
-    return HttpResponse(headers={"Docker-Distribution-API-Version": "registry/2.0"})
+# def ApiVersionn(request):
+#     """
+#     To check the API version
+#     """
+#     return HttpResponse(headers={"Docker-Distribution-API-Version": "registry/2.0"})
 
 
 class Check_Blob(APIView):
     """
     Check if a blob exists or not
     """
-    def list(self,request,repository,digest):
+    def get(self,request,repository,digest):
         blob = models.Blob.objects.filter(digest=digest).first()
         if not blob:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -36,7 +36,7 @@ class Check_Blob(APIView):
 
 class BlobUploadViewSet(APIView):
 
-    def create(self, request, repository=None):
+    def post(self, request, repository=None):
         repository=unquote(repository)
         # print("========== DOCKER UPLOAD REQUEST ==========")
         repo=models.Repository.objects.filter(name=repository).first()
@@ -47,7 +47,7 @@ class BlobUploadViewSet(APIView):
         return Response(
         status=status.HTTP_202_ACCEPTED,
         headers={
-            "Location": f"/v2/{repository}/blobs/uploads/{session.id}",
+            "Location": f"push/{repository}/blobs/uploads/{session.id}",
             "Docker-Upload-UUID": str(session.id),
             "Range": "0-0",
             "Docker-Distribution-API-Version": "registry/2.0",
@@ -100,7 +100,7 @@ class BlobUploadViewSet(APIView):
             {"message": "Chunk received"},
             status=status.HTTP_202_ACCEPTED,
             headers={
-                "Location": f"/v2/{repository}/blobs/uploads/{upload_uuid}",
+                "Location": f"push/{repository}/blobs/uploads/{upload_uuid}",
                 "Docker-Upload-UUID": str(upload_uuid),
                 "Range": f"0-{session.offset - 1}" if session.offset else "0-0",
                 "Docker-Distribution-API-Version": "registry/2.0",
@@ -219,7 +219,7 @@ class BlobUploadViewSet(APIView):
         return Response(
             status=status.HTTP_201_CREATED,
             headers={
-                "Location": f"/v2/{repository}/blobs/{expected_digest}",
+                "Location": f"push/{repository}/blobs/{expected_digest}",
                 "Docker-Content-Digest": expected_digest,
                 "Docker-Distribution-API-Version": "registry/2.0",
             }
@@ -229,7 +229,7 @@ class BlobUploadViewSet(APIView):
 
 class ManifestUploadViewSet(APIView):
 
-    def update(self, request, repository=None, reference=None):
+    def put(self, request, repository=None, reference=None):
         # Find repository
         print("the repo is ",repository)
         print(models.Repository.objects.all().values("name"))
@@ -283,6 +283,6 @@ class ManifestUploadViewSet(APIView):
             status=status.HTTP_201_CREATED,
             headers={
                 "Docker-Content-Digest": digest,
-                "Location": f"/v2/{repository}/manifests/{reference}",
+                "Location": f"push/{repository}/manifests/{reference}",
             }
         )

@@ -1,0 +1,6 @@
+{# Usage: {% include "components/table_toolbar.html" with id="repos" placeholder="Filter repositories…" %} #}
+<div class="table-toolbar">
+  <input class="input" type="search" id="{{ id }}-filter" placeholder="{{ placeholder|default:'Filter…' }}">
+  <div class="topbar__spacer"></div>
+  <button class="btn btn--sm btn--icon" id="{{ id }}-refresh" title="Refresh"><i data-icon="refresh"></i></button>
+</div>

@@ -1,0 +1,144 @@
+{% extends "layouts/app.html" %}
+{% load static %}
+{# Manifest detail — reached via /r/<repo>/manifests/<digest>/ or /r/<repo>/tags/<tag>/ #}
+{% block title %}Manifest{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'ui:repositories' %}">Repositories</a><span class="sep">/</span>
+  <a id="bc-repo" href="#" class="mono">…</a><span class="sep">/</span>
+  <span id="bc-ref" class="mono">…</span>
+</div>
+{% endblock %}
+
+{% block page_title %}<span class="mono" id="m-title">…</span>{% endblock %}
+{% block page_meta %}<span id="m-digest-full"></span>{% endblock %}
+{% block page_actions %}
+  <button class="btn" id="m-pull"><i data-icon="terminal"></i> Pull command</button>
+  <button class="btn" id="m-download"><i data-icon="download"></i> Raw manifest</button>
+  <div class="dropdown">
+    <button class="btn btn--icon" data-dropdown><i data-icon="more"></i></button>
+    <div class="dropdown__menu">
+      <button class="dropdown__item" data-modal-open="modal-retag"><i data-icon="tag"></i> Add tag</button>
+      <div class="dropdown__sep"></div>
+      <button class="dropdown__item danger" id="m-delete"><i data-icon="trash"></i> Delete manifest</button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid--main-aside">
+  <div class="stack">
+    <!-- Index notice (multi-platform) -->
+    <div class="alert alert--info hidden" id="m-index-alert">
+      <i data-icon="layers"></i>
+      <div class="alert__body"><strong>This is an image index.</strong>It references one manifest per platform. Select a platform below to inspect its layers.</div>
+    </div>
+
+    <!-- Platform selector for indexes -->
+    <div class="card hidden" id="m-platforms-card">
+      <div class="card__header"><h2>Platforms</h2></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Platform</th><th>Digest</th><th>Media type</th><th class="num">Size</th><th class="actions"></th></tr></thead>
+          <tbody id="m-platforms-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div class="card">
+      <div class="card__header">
+        <h2>Layers</h2>
+        <span class="small faint"><span id="m-layer-count">—</span> layers · <span id="m-layer-total">—</span></span>
+      </div>
+      <div class="card__body">
+        <div class="layers" id="m-layers"></div>
+      </div>
+    </div>
+
+    <!-- Config -->
+    <div class="card" data-tabs>
+      <div class="card__header">
+        <h2>Image config</h2>
+        <span id="m-config-digest"></span>
+      </div>
+      <div class="tabs" style="margin:0;padding:0 18px">
+        <button class="tab active" data-tab="cfg-summary">Summary</button>
+        <button class="tab" data-tab="cfg-env">Environment</button>
+        <button class="tab" data-tab="cfg-history">History</button>
+        <button class="tab" data-tab="cfg-raw">Raw JSON</button>
+      </div>
+      <div class="card__body">
+        <div class="tab-panel active" data-panel="cfg-summary">
+          <dl class="kv">
+            <dt>Architecture / OS</dt><dd id="cfg-platform">—</dd>
+            <dt>Created</dt><dd id="cfg-created">—</dd>
+            <dt>Entrypoint</dt><dd class="mono" id="cfg-entrypoint">—</dd>
+            <dt>Cmd</dt><dd class="mono" id="cfg-cmd">—</dd>
+            <dt>Working dir</dt><dd class="mono" id="cfg-workdir">—</dd>
+            <dt>User</dt><dd class="mono" id="cfg-user">—</dd>
+            <dt>Exposed ports</dt><dd id="cfg-ports">—</dd>
+            <dt>Labels</dt><dd id="cfg-labels">—</dd>
+          </dl>
+        </div>
+        <div class="tab-panel" data-panel="cfg-env"><div class="codeblock" id="cfg-env">—</div></div>
+        <div class="tab-panel" data-panel="cfg-history"><div class="feed" id="cfg-history"></div></div>
+        <div class="tab-panel" data-panel="cfg-raw"><div class="codeblock" id="cfg-raw">—</div></div>
+      </div>
+    </div>
+
+    <!-- Raw manifest -->
+    <div class="card">
+      <div class="card__header"><h2>Manifest JSON</h2><button class="btn btn--sm" id="m-copy-raw"><i data-icon="copy"></i> Copy</button></div>
+      <div class="card__body"><div class="codeblock" id="m-raw" style="max-height:420px;overflow:auto">—</div></div>
+    </div>
+  </div>
+
+  <!-- Aside -->
+  <div class="stack">
+    <div class="card">
+      <div class="card__header"><h2>Details</h2></div>
+      <div class="card__body">
+        <dl class="kv" style="grid-template-columns:110px 1fr">
+          <dt>Digest</dt><dd id="m-digest"></dd>
+          <dt>Media type</dt><dd class="mono small" id="m-media-type">—</dd>
+          <dt>Schema</dt><dd id="m-schema">—</dd>
+          <dt>Total size</dt><dd id="m-size">—</dd>
+          <dt>Created</dt><dd id="m-created">—</dd>
+          <dt>Repositories</dt><dd id="m-repos">—</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header"><h2>Tags</h2><button class="btn btn--sm" data-modal-open="modal-retag"><i data-icon="plus"></i></button></div>
+      <div class="card__body row row--wrap" id="m-tags"><span class="skeleton">loading</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card__header"><h2>Referenced by</h2></div>
+      <div class="card__body small muted" id="m-referenced-by">Not referenced by any image index.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add tag modal -->
+<div class="modal-backdrop" id="modal-retag">
+  <div class="modal">
+    <div class="modal__header"><h2>Add tag</h2><button class="btn btn--ghost btn--icon btn--sm" data-modal-close><i data-icon="x"></i></button></div>
+    <form id="retag-form">
+      <div class="modal__body stack">
+        <div class="field">
+          <label for="retag-name">Tag name</label>
+          <input class="input mono" id="retag-name" placeholder="v1.2.3" required pattern="[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}">
+          <span class="help">Points this tag at the current manifest. Existing tag with the same name will be moved.</span>
+        </div>
+      </div>
+      <div class="modal__footer"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn--primary" type="submit">Add tag</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}{{ block.super }}<script src="{% static 'js/pages/manifest.js' %}"></script>{% endblock %}

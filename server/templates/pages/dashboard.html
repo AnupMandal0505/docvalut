@@ -1,0 +1,106 @@
+{% extends "layouts/app.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_meta %}Registry overview and recent activity{% endblock %}
+{% block page_actions %}
+  <button class="btn" id="dash-refresh"><i data-icon="refresh"></i> Refresh</button>
+  <button class="btn btn--primary" data-modal-open="modal-push-help"><i data-icon="terminal"></i> Push an image</button>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid--4">
+  {% include "components/stat_card.html" with id="stat-repos" label="Repositories" %}
+  {% include "components/stat_card.html" with id="stat-tags" label="Tags" %}
+  {% include "components/stat_card.html" with id="stat-blobs" label="Blobs" %}
+  {% include "components/stat_card.html" with id="stat-storage" label="Storage used" %}
+</div>
+
+<div class="grid grid--main-aside mt-2">
+  <div class="stack">
+    <!-- Recent pushes -->
+    <div class="card">
+      <div class="card__header">
+        <h2>Recently pushed</h2>
+        <a class="small" href="{% url 'ui:repositories' %}">View all repositories →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Repository</th><th>Tag</th><th>Digest</th><th class="num">Size</th><th>Pushed</th></tr></thead>
+          <tbody id="recent-pushes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Storage breakdown -->
+    <div class="card">
+      <div class="card__header"><h2>Storage</h2><span class="small faint" id="storage-path">MEDIA_ROOT/registry</span></div>
+      <div class="card__body">
+        <div class="row row--between small muted"><span>Blobs</span><span id="storage-blobs-size">—</span></div>
+        <div class="progress mt-1"><span id="storage-blobs-bar" style="width:0%"></span></div>
+        <div class="row row--between small muted mt-2"><span>Pending uploads (temp files)</span><span id="storage-uploads-size">—</span></div>
+        <div class="progress warn mt-1"><span id="storage-uploads-bar" style="width:0%"></span></div>
+        <div class="row row--between small muted mt-2"><span>Unreferenced blobs (GC candidates)</span><span id="storage-orphan-size">—</span></div>
+        <div class="progress danger mt-1"><span id="storage-orphan-bar" style="width:0%"></span></div>
+      </div>
+      <div class="card__footer">
+        <span class="small faint">Disk free: <span id="storage-free">—</span></span>
+        <a class="btn btn--sm" href="{% url 'ui:gc' %}"><i data-icon="broom"></i> Run garbage collection</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <!-- Activity -->
+    <div class="card">
+      <div class="card__header"><h2>Activity</h2></div>
+      <div class="card__body" style="padding-top:4px;padding-bottom:4px">
+        <div class="feed" id="activity-feed"></div>
+      </div>
+    </div>
+
+    <!-- Upload sessions -->
+    <div class="card">
+      <div class="card__header"><h2>Upload sessions</h2><a class="small" href="{% url 'ui:uploads' %}">Manage →</a></div>
+      <div class="card__body">
+        <div class="grid grid--3" style="gap:8px">
+          <div><div class="small faint">Pending</div><div class="stat__value" style="font-size:20px" id="uploads-pending">—</div></div>
+          <div><div class="small faint">Completed</div><div class="stat__value" style="font-size:20px" id="uploads-completed">—</div></div>
+          <div><div class="small faint">Aborted</div><div class="stat__value" style="font-size:20px" id="uploads-aborted">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System -->
+    <div class="card">
+      <div class="card__header"><h2>System</h2></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Version</dt><dd class="mono" id="sys-version">—</dd>
+          <dt>API</dt><dd class="mono" id="sys-api">/v2/</dd>
+          <dt>Database</dt><dd id="sys-db">—</dd>
+          <dt>Storage driver</dt><dd id="sys-storage">filesystem</dd>
+          <dt>Last GC</dt><dd id="sys-last-gc">—</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Push help modal -->
+<div class="modal-backdrop" id="modal-push-help">
+  <div class="modal modal--lg">
+    <div class="modal__header"><h2>Push an image</h2><button class="btn btn--ghost btn--icon btn--sm" data-modal-close><i data-icon="x"></i></button></div>
+    <div class="modal__body stack">
+      <p class="muted">Tag a local image with this registry's host and push it.</p>
+      <div class="codeblock" id="push-cmds">docker login <span class="registry-host">registry.example.com</span>
+docker tag myapp:latest <span class="registry-host">registry.example.com</span>/team-a/myapp:latest
+docker push <span class="registry-host">registry.example.com</span>/team-a/myapp:latest</div>
+      <p class="small faint">Repositories are created automatically on first push.</p>
+    </div>
+    <div class="modal__footer"><button class="btn" data-modal-close>Close</button></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}{{ block.super }}<script src="{% static 'js/pages/dashboard.js' %}"></script>{% endblock %}

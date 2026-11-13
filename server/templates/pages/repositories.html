@@ -1,0 +1,59 @@
+{% extends "layouts/app.html" %}
+{% load static %}
+{% block title %}Repositories{% endblock %}
+{% block page_title %}Repositories{% endblock %}
+{% block page_meta %}<span id="repos-summary">All image repositories in this registry</span>{% endblock %}
+{% block page_actions %}
+  <button class="btn btn--primary" data-modal-open="modal-new-repo"><i data-icon="plus"></i> New repository</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  {% include "components/table_toolbar.html" with id="repos" placeholder="Filter by name or namespace…" %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th class="num">Tags</th>
+          <th class="num">Manifests</th>
+          <th class="num">Size</th>
+          <th>Last push</th>
+          <th class="actions"></th>
+        </tr>
+      </thead>
+      <tbody id="repos-body"></tbody>
+    </table>
+  </div>
+  <div class="card__footer">
+    <span class="small faint">Repositories share blobs globally — sizes are logical, not on-disk.</span>
+    {% include "components/pagination.html" with id="repos" %}
+  </div>
+</div>
+
+<!-- New repository modal -->
+<div class="modal-backdrop" id="modal-new-repo">
+  <div class="modal">
+    <div class="modal__header"><h2>New repository</h2><button class="btn btn--ghost btn--icon btn--sm" data-modal-close><i data-icon="x"></i></button></div>
+    <form id="new-repo-form">
+      <div class="modal__body stack">
+        <div class="field">
+          <label for="new-repo-name">Name</label>
+          <input class="input mono" id="new-repo-name" name="name" placeholder="team-a/backend" required pattern="[a-z0-9]+(?:[._-][a-z0-9]+)*(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)*">
+          <span class="help">Lowercase, may include a namespace with <code>/</code>. Max 100 characters.</span>
+        </div>
+        <div class="field">
+          <label for="new-repo-desc">Description <span class="faint">(optional)</span></label>
+          <textarea class="input" id="new-repo-desc" name="description" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn" type="button" data-modal-close>Cancel</button>
+        <button class="btn btn--primary" type="submit">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}{{ block.super }}<script src="{% static 'js/pages/repositories.js' %}"></script>{% endblock %}

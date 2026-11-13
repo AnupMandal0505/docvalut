@@ -5,8 +5,11 @@ from django.conf import settings
 class Repository(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid7,editable=False)
     name=models.CharField(max_length=100)
-
-
+    created_at=models.DateTimeField(auto_now_add=True)
+    updated_at=models.DateTimeField(auto_now=True)
+    icon=models.ImageField(null=True,blank=True,upload_to='repo_icons/%Y/%m/%d/')
+    description = models.TextField(blank=True, default="")
+    
 class UploadSession(models.Model):
     ROLE_CHOICES = [
         ("aborted", "Aborted"),

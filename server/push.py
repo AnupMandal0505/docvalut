@@ -2,12 +2,12 @@ import subprocess,os
 import tarfile,json
 from pathlib import Path
 import requests
-from urllib.parse import urljoin,urlencode
+from urllib.parse import urljoin
 
 EXPORT_PATH=Path("/tmp/dockervault")
-BASE_DOMAIN="http://localhost:8000/"
-IMAGE_NAME='redis'
-PUSHING_TAG="v1"
+BASE_DOMAIN="http://localhost:8000/v1/"
+IMAGE_NAME='mongo'
+PUSHING_TAG="latest"
 
 def get_docker_image(image:str):
     print(f"Exporting local image {image} ...")
@@ -29,8 +29,8 @@ def read_manifest():
         return data[0]
 
 
-get_docker_image(IMAGE_NAME)
-unzip_image()
+# get_docker_image(IMAGE_NAME)
+# unzip_image()
 config=read_manifest()
 all_layers:list=list(config["LayerSources"].values())
 config_path = EXPORT_PATH / "image" / config["Config"]
@@ -45,11 +45,11 @@ for v in all_layers:
     size = v["size"]
     file_path=EXPORT_PATH.joinpath('image/blobs/sha256').joinpath(hash)
     #Check_Blob
-    res=requests.head(f"{BASE_DOMAIN}v2/{IMAGE_NAME}/blobs/{(v["digest"])}")
+    res=requests.head(f"{BASE_DOMAIN}push/{IMAGE_NAME}/blobs/{(v["digest"])}")
     if res.status_code!=404:
         continue
     print("creating session to upload")
-    res=requests.post(f"{BASE_DOMAIN}v2/{IMAGE_NAME}/blobs/uploads/",data={})
+    res=requests.post(f"{BASE_DOMAIN}push/{IMAGE_NAME}/blobs/uploads/",data={})
     if res.status_code!=202:
         print("something went wrong ")
         continue
@@ -58,7 +58,7 @@ for v in all_layers:
     # print("the headers : ",res.headers)
     print("\n========== PATCH UPLOAD ==========")
     upload_location=joined = urljoin(BASE_DOMAIN, sessions_headers["Location"])
-    
+    print("the upload location url is ",upload_location)    
     with open(file_path, "rb") as file:
         response = requests.patch(
             upload_location,
@@ -68,7 +68,7 @@ for v in all_layers:
     print(response.status_code)
     print(response.text)
     print("\n========== FINALIZE BLOB UPLOAD ==========")
-    res=requests.put(f"{BASE_DOMAIN}v2/{IMAGE_NAME}/blobs/uploads/{sessions_id}?digest={(v["digest"])}",data={})
+    res=requests.put(f"{BASE_DOMAIN}push/{IMAGE_NAME}/blobs/uploads/{sessions_id}?digest={(v["digest"])}",data={})
     if res.status_code!=201:
         print("something went wrong at line 65")
     print("now uploading manifest")
@@ -81,7 +81,7 @@ for v in all_layers:
     manifest, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
 
-    res=requests.put(f"{BASE_DOMAIN}v2/{IMAGE_NAME}/manifests/{PUSHING_TAG}",data=manifest_bytes)
+    res=requests.put(f"{BASE_DOMAIN}push/{IMAGE_NAME}/manifests/{PUSHING_TAG}",data=manifest_bytes)
     print(res.status_code)
 
 

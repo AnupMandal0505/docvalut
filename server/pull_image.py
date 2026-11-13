@@ -13,8 +13,8 @@ from urllib.parse import quote
 
 # Configuration
 REGISTRY = "http://localhost:8000"
-REPOSITORY = "redis"
-TAG = "v1"
+REPOSITORY = "psql"
+TAG = "17"
 
 IMAGE_NAME = f"{REPOSITORY}:{TAG}"
 
@@ -73,11 +73,18 @@ def main():
         # 2. Download config
         config = manifest["config"]
         config_filename = config["digest"].split(":")[1] + ".json"
-
         config_path = image_dir / config_filename
 
         print("Downloading config...")
         download_blob(config["digest"], config_path)
+
+        # Read the downloaded image config
+        with open(config_path, "r") as file:
+            image_config = json.load(file)
+
+        print("\nConfig DiffIDs:")
+        for diff_id in image_config["rootfs"]["diff_ids"]:
+            print(diff_id)
 
         # 3. Download and decompress layers
         layer_paths = []
@@ -93,10 +100,9 @@ def main():
             print(f"Downloading layer {index + 1}/{len(manifest['layers'])}...")
 
             download_blob(layer["digest"], compressed_path)
-
-
+ 
             # Docker save archive expects uncompressed layer.tar
-            with gzip.open(compressed_path, "rb") as source:
+            with open(compressed_path, "rb") as source:
                 print("Source:", source.name)
                 print("First bytes:", source.read(16).hex())
                 source.seek(0)
