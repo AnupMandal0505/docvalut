@@ -8,7 +8,7 @@ import os,re,hashlib
 from django.db import transaction
 from django.conf import settings
 from urllib.parse import unquote
-
+from accounts.common import CliTokenAuthentication
 # def ApiVersionn(request):
 #     """
 #     To check the API version
@@ -20,6 +20,8 @@ class Check_Blob(APIView):
     """
     Check if a blob exists or not
     """
+    authentication_classes = [CliTokenAuthentication]
+
     def get(self,request,repository,digest):
         blob = models.Blob.objects.filter(digest=digest).first()
         if not blob:
@@ -35,6 +37,8 @@ class Check_Blob(APIView):
         )
 
 class BlobUploadViewSet(APIView):
+    authentication_classes = [CliTokenAuthentication]
+
 
     def post(self, request, repository=None):
         repository=unquote(repository)
@@ -228,6 +232,7 @@ class BlobUploadViewSet(APIView):
 
 
 class ManifestUploadViewSet(APIView):
+    authentication_classes = [CliTokenAuthentication]
 
     def put(self, request, repository=None, reference=None):
         # Find repository

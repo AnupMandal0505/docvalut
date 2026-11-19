@@ -7,7 +7,7 @@ SECRET_KEY = 'django-insecure-upcc$m8ky311my62*0$)%525lxa43)qz_der)@*(&***g0xoco
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -18,14 +18,17 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'rest_framework',
     'django.contrib.staticfiles','accounts.apps.AccountsConfig',
-    'repo.apps.RepoConfig'
+    'repo.apps.RepoConfig',
+    'logic.apps.LogicConfig',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -102,3 +105,54 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = "accounts.User"
 MEDIA_ROOT=Path.joinpath(BASE_DIR,"media")
+
+FRONTEND_DOMAIN=""
+
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
+    "http://192.168.0.161:3001",
+    "http://192.168.0.153:3000",
+    "http://192.168.0.161:3000",
+    "http://192.168.0.162:3000",
+    "https://sumit.superfastmind.com",
+    "https://anup.superfastmind.com",
+    "https://anurag.superfastmind.com",
+    "https://kay-enginous-unsensuously.ngrok-free.dev"
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://anup.superfastmind.com",
+    "https://sumit.superfastmind.com",
+    "http://192.168.0.153:3000",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
+    "http://127.0.0.1:3000",
+    "https://anurag.superfastmind.com",
+    "https://kay-enginous-unsensuously.ngrok-free.dev"
+]
+
+CORS_ALLOW_METHODS = (
+    "GET",
+    "OPTIONS",
+    "POST",
+)
+CORS_ALLOW_HEADERS=["*"]
+
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.TokenAuthentication',
+#     ],
+# }
+
