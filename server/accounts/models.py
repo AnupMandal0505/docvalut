@@ -1,5 +1,5 @@
 from django.db import models
-import uuid
+import uuid6 as uuid
 from django.contrib.auth.models import (AbstractBaseUser,PermissionsMixin)
 from .managers import UserManager
 
@@ -17,7 +17,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["email"]
     class Meta:
         db_table = "users"
         constraints=[
@@ -32,7 +32,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class CliToken(models.Model):
-    token=models.CharField(max_length=100,unique=True,primary_key=True)
+    id = models.UUIDField( primary_key=True, default=uuid.uuid7, editable=False )
+    token = models.CharField(max_length=100, unique=True)
     user=models.ForeignKey(User,on_delete=models.CASCADE)
+    name = models.CharField(max_length=150)
+    description = models.CharField(max_length=150,blank=True)
     created_at= models.DateTimeField(auto_now_add=True)
+    updated_at=models.DateTimeField(auto_now=True)
     expires_at=models.DateTimeField(null=True,blank=True)
+    is_active = models.BooleanField(default=True)

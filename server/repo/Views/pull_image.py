@@ -5,24 +5,26 @@ from django.http import Http404,FileResponse,HttpResponse
 from django.shortcuts import get_object_or_404
 from repo import models
 import os
+from accounts.common import CliTokenAuthentication
+
+
 
 class ManifestDownloadView(APIView):
-    def get(self, request, repository, reference):
-        repo = get_object_or_404(models.Repository,name=repository)
+    authentication_classes = [CliTokenAuthentication]
+
+    def get(self, request):
+        repository=request.GET.get("repository")
+        reference=request.GET.get("reference")
+        repo=models.Repository.objects.get(name=repository)
         if reference.startswith("sha256:"):
-            manifest = get_object_or_404(
-                models.Manifest,
-                digest=reference
-            )
+            manifest = models.Manifest.objects.get(digest=reference)
         else:
-            tag = get_object_or_404(
-                models.Tag,
-                repository=repo,
-                name=reference
-            )
+            print("the tag is ",reference)
+            tag = models.Tag.objects.get(repository=repo,name=reference)
             manifest = tag.manifest
 
-        response = Response(
+        print("here is the data")
+        response = HttpResponse(
             manifest.content,
             content_type=manifest.media_type,
             status=status.HTTP_200_OK
@@ -34,6 +36,7 @@ class ManifestDownloadView(APIView):
 
 
 class BlobDownloadView(APIView):
+    authentication_classes = [CliTokenAuthentication]
 
     def get_blob(self, repository, digest):
         repo = get_object_or_404(
@@ -52,7 +55,9 @@ class BlobDownloadView(APIView):
 
         return blob
 
-    def get(self, request, repository, digest):
+    def get(self, request):
+        repository=request.GET.get("repository")
+        digest=request.GET.get("digest")
         blob = self.get_blob(repository, digest)
 
         response = FileResponse(
@@ -65,7 +70,9 @@ class BlobDownloadView(APIView):
 
         return response
 
-    def head(self, request, repository, digest):
+    def head(self, request):
+        repository=request.GET.get("repository")
+        digest=request.GET.get("digest")
         blob = self.get_blob(repository, digest)
 
         response = HttpResponse(status=200)
@@ -77,8 +84,10 @@ class BlobDownloadView(APIView):
 
 
 class TagListView(APIView):
+    authentication_classes = [CliTokenAuthentication]
 
-    def get(self, request, repository):
+    def get(self, request):
+        repository=request.GET.get("repository")
         repo = get_object_or_404(
             models.Repository,
             name=repository

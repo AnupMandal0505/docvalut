@@ -1,0 +1,51 @@
+"""
+create.py – Create ViewSets for the Docker/OCI registry management API.
+
+All ViewSets extend BaseClass (TokenAuthentication + IsAuthenticated).
+Only create operations are defined here.
+Read operations live in views.py.
+
+URL prefix: /logic/master/create/<basename>/
+"""
+
+from rest_framework.response import Response
+from accounts.common import BaseClass
+from repo.models import (Repository,)
+from .serializer import (RepositorySerializer)
+
+
+# ---------------------------------------------------------------------------
+# Repository – Create
+# ---------------------------------------------------------------------------
+
+class MyRepository(BaseClass):
+    """
+    POST /logic/master/create/my-repository/
+    """
+
+    def create(self, request):
+        name = request.data.get("name")
+        description = request.data.get("description", "")
+        icon = request.FILES.get("icon")
+
+        if not name or not name.strip():
+            return Response({"RES": False, "msg": "Repository name must not be empty.", "data": ""})
+
+        name = name.strip()
+        name = f"{request.user.username}/{name.strip()}"
+
+        if Repository.objects.filter(name=name).exists():
+            return Response({"RES": False, "msg": f"A repository named '{name}' already exists.", "data": ""})
+
+        repo = Repository.objects.create(name=name, description=description, icon=icon)
+        serializer = RepositorySerializer(repo)
+        return Response({"RES": True, "msg": "Repository created.", "data": serializer.data})
+
+class DeleteMyRepository(BaseClass):
+    """
+    POST /logic/master/create/delete-my-repository/
+    """
+
+    def create(self, request):
+        print(request.data)
+        return Response({"RES": True, "msg": "Deleted Repository."})
