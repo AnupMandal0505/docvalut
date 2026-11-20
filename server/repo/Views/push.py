@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import HttpResponse
 from repo import models
@@ -8,20 +7,13 @@ import os,re,hashlib
 from django.db import transaction
 from django.conf import settings
 from urllib.parse import unquote
-from accounts.common import CliTokenAuthentication
-# def ApiVersionn(request):
-#     """
-#     To check the API version
-#     """
-#     return HttpResponse(headers={"Docker-Distribution-API-Version": "registry/2.0"})
+from accounts.common import BaseCliView
 
 
-class Check_Blob(APIView):
+class Check_Blob(BaseCliView):
     """
     Check if a blob exists or not
     """
-    authentication_classes = [CliTokenAuthentication]
-
     def get(self,request,repository,digest):
         blob = models.Blob.objects.filter(digest=digest).first()
         if not blob:
@@ -36,9 +28,7 @@ class Check_Blob(APIView):
             }
         )
 
-class BlobUploadViewSet(APIView):
-    authentication_classes = [CliTokenAuthentication]
-
+class BlobUploadViewSet(BaseCliView):
 
     def post(self, request, repository=None):
         repository=unquote(repository)
@@ -231,8 +221,7 @@ class BlobUploadViewSet(APIView):
 
 
 
-class ManifestUploadViewSet(APIView):
-    authentication_classes = [CliTokenAuthentication]
+class ManifestUploadViewSet(BaseCliView):
 
     def put(self, request, repository=None, reference=None):
         # Find repository

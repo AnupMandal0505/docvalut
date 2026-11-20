@@ -1,17 +1,13 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from django.http import Http404,FileResponse,HttpResponse
 from django.shortcuts import get_object_or_404
 from repo import models
 import os
-from accounts.common import CliTokenAuthentication
+from accounts.common import BaseCliView
 
 
-
-class ManifestDownloadView(APIView):
-    authentication_classes = [CliTokenAuthentication]
-
+class ManifestDownloadView(BaseCliView):
     def get(self, request):
         repository=request.GET.get("repository")
         reference=request.GET.get("reference")
@@ -35,21 +31,14 @@ class ManifestDownloadView(APIView):
         return response
 
 
-class BlobDownloadView(APIView):
-    authentication_classes = [CliTokenAuthentication]
+class BlobDownloadView(BaseCliView):
 
     def get_blob(self, repository, digest):
-        repo = get_object_or_404(
-            models.Repository,
-            name=repository
-        )
-
-        # Prototype: blobs are globally deduplicated by digest.
-        blob = get_object_or_404(
-            models.Blob,
-            digest=digest
-        )
-
+        repo = models.Repository.objects.filter(name=repository).exists()
+        if not repo:
+            raise Http404("Repo not found")
+        print("The digest is ",digest)
+        blob = models.Blob.objects.get(digest=digest)
         if not os.path.isfile(blob.storage_path):
             raise Http404("Blob file not found")
 
@@ -83,8 +72,7 @@ class BlobDownloadView(APIView):
         return response
 
 
-class TagListView(APIView):
-    authentication_classes = [CliTokenAuthentication]
+class TagListView(BaseCliView):
 
     def get(self, request):
         repository=request.GET.get("repository")

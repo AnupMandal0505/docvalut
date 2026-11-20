@@ -1,7 +1,7 @@
 app_name="hub"
 from django.urls import path
-from .Views.push_image import *
-from .Views import pull_image
+from .Views.push import *
+from .Views import pull as pull_image
 
 urlpatterns = [
     path("push/<path:repository>/blobs/uploads/",BlobUploadViewSet.as_view(),name="blob-upload"),

@@ -2,14 +2,15 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate,get_user_model
 from rest_framework.response import Response
-from django.core.cache import cache
-from django.conf import settings
-FRONTEND_DOMAIN=settings.FRONTEND_DOMAIN
 import os
-User = get_user_model()
 from .common import BaseClass
 from accounts.models import CliToken
 from accounts.serializer import CliTokenSerializer
+import secrets
+from django.utils import timezone
+from datetime import timedelta
+User = get_user_model()
+
 
 class LoginUser(ViewSet):
     """
@@ -98,9 +99,7 @@ class MyAccount(BaseClass):
 
     
 
-import secrets
-from django.utils import timezone
-from datetime import timedelta
+
 
 class MyAccessToken(BaseClass):
     def list(self, request):
@@ -147,6 +146,8 @@ class MyAccessToken(BaseClass):
                 "is_active": token.is_active
             }
         })
+
+    
 class UpdateMyAccessToken(BaseClass):
 
     def create(self, request):

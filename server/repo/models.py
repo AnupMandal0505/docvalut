@@ -1,5 +1,5 @@
 from django.db import models
-import uuid6 as uuid,os
+import  uuid,os
 from django.conf import settings
 
 class Repository(models.Model):

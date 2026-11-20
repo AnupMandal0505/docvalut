@@ -180,7 +180,7 @@ cython_debug/
 
 postgres_data/
 pgdata/
-
+postgres_final/
 
 */migrations/000*.py
 */migrations/0*.py

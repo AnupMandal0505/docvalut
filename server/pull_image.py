@@ -79,12 +79,12 @@ def main():
         download_blob(config["digest"], config_path)
 
         # Read the downloaded image config
-        with open(config_path, "r") as file:
-            image_config = json.load(file)
+        # with open(config_path, "r") as file:
+        #     image_config = json.load(file)
 
-        print("\nConfig DiffIDs:")
-        for diff_id in image_config["rootfs"]["diff_ids"]:
-            print(diff_id)
+        # print("\nConfig DiffIDs:")
+        # for diff_id in image_config["rootfs"]["diff_ids"]:
+        #     print(diff_id)
 
         # 3. Download and decompress layers
         layer_paths = []
@@ -94,23 +94,23 @@ def main():
             layer_dir = image_dir / f"layer-{index}"
             layer_dir.mkdir()
 
-            compressed_path = layer_dir / "layer.tar.gz"
+            # compressed_path = layer_dir / "layer.tar.gz"
             uncompressed_path = layer_dir / "layer.tar"
 
             print(f"Downloading layer {index + 1}/{len(manifest['layers'])}...")
 
-            download_blob(layer["digest"], compressed_path)
+            download_blob(layer["digest"], uncompressed_path)
  
             # Docker save archive expects uncompressed layer.tar
-            with open(compressed_path, "rb") as source:
-                print("Source:", source.name)
-                print("First bytes:", source.read(16).hex())
-                source.seek(0)
-                with open(uncompressed_path, "wb") as destination:
-                    print("Destination:", destination.name)
-                    shutil.copyfileobj(source, destination)
+            # with open(compressed_path, "rb") as source:
+            #     print("Source:", source.name)
+            #     print("First bytes:", source.read(16).hex())
+            #     source.seek(0)
+            #     with open(uncompressed_path, "wb") as destination:
+            #         print("Destination:", destination.name)
+            #         shutil.copyfileobj(source, destination)
 
-            compressed_path.unlink()
+            # compressed_path.unlink()
 
             layer_paths.append(
                 f"layer-{index}/layer.tar"
