@@ -1,6 +1,7 @@
-from rest_framework.viewsets import ViewSet
+from adrf.viewsets import ViewSet
+from asgiref.sync import sync_to_async
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate,get_user_model
+from django.contrib.auth import aauthenticate, get_user_model
 from rest_framework.response import Response
 import os
 from .common import BaseClass
@@ -33,9 +34,9 @@ class LoginUser(ViewSet):
             "RES": false
         }
     """
-    def list(self,reuqst):
+    async def list(self,reuqst):
         return Response({"Version":os.environ.get("VERSION","")})
-    def create(self,request):
+    async def create(self,request):
         print(request.data)
         try:
 
@@ -44,12 +45,12 @@ class LoginUser(ViewSet):
             if not username or not password:
                 return Response({"RES": False,"msg": "Username and password are required."})
             
-            user=authenticate(username=username,password=password)    
+            user=await aauthenticate(username=username,password=password)    
             if user and user.is_active:
                 a=Token.objects.filter(user=user)
-                for i in a:
-                    i.delete()
-                token=Token.objects.create(user=user)
+                async for i in a:
+                    await i.adelete()
+                token=await Token.objects.acreate(user=user)
                 return Response({"RES":True,"token":token.key,"data":{"full_name":user.name}})
             return Response({"RES": False,"msg": "Invalid username or password."})
 
@@ -61,9 +62,10 @@ class LoginUser(ViewSet):
 
 class Logout(BaseClass):
  
-    def create(self,request):
+    async def create(self,request):
         try:
-            Token.objects.get(user=request.user).delete()
+            t = await Token.objects.aget(user=request.user)
+            await t.adelete()
         except Token.DoesNotExist:
             pass  
         return Response({"RES":True})
@@ -71,7 +73,7 @@ class Logout(BaseClass):
 
 class MyAccount(BaseClass):
  
-    def list(self,request):
+    async def list(self,request):
         user = request.user
 
         us = {
@@ -82,7 +84,7 @@ class MyAccount(BaseClass):
      
         return Response({"RES":True,"data":us})
     
-    def create(self, request):
+    async def create(self, request):
         user = request.user
 
         full_name = request.data.get("full_name")
@@ -94,7 +96,7 @@ class MyAccount(BaseClass):
         if password:
             user.set_password(password)
 
-        user.save()
+        await user.asave()
         return Response({"RES": True,"msg": "Profile updated successfully"})
 
     
@@ -102,15 +104,16 @@ class MyAccount(BaseClass):
 
 
 class MyAccessToken(BaseClass):
-    def list(self, request):
+    async def list(self, request):
         tokens = CliToken.objects.filter(user=request.user).order_by("-created_at")
-        if not tokens.exists():
+        if not await tokens.aexists():
             return Response({"RES": False,"msg": "Access token not found."})
-        return Response({"RES": True,"data": CliTokenSerializer(tokens,many=True).data})
+        data = await sync_to_async(lambda: CliTokenSerializer(tokens,many=True).data)()
+        return Response({"RES": True,"data": data})
 
 
 
-    def create(self, request):
+    async def create(self, request):
         user = request.user
 
         name = request.data.get("name")
@@ -132,7 +135,7 @@ class MyAccessToken(BaseClass):
 
             expires_at = timezone.now() + timedelta(days=days)
 
-        token = CliToken.objects.create(user=user,name=name.strip(),description=description,token=secrets.token_hex(32),expires_at=expires_at,is_active=True)
+        token = await CliToken.objects.acreate(user=user,name=name.strip(),description=description,token=secrets.token_hex(32),expires_at=expires_at,is_active=True)
 
         return Response({
             "RES": True,
@@ -150,13 +153,13 @@ class MyAccessToken(BaseClass):
     
 class UpdateMyAccessToken(BaseClass):
 
-    def create(self, request):
+    async def create(self, request):
         id = request.data.get("id")
 
         if not id:
             return Response({"RES": False,"msg": "Token ID is required.","data": None})
 
-        token = CliToken.objects.filter(id=id,user=request.user).first()
+        token = await CliToken.objects.filter(id=id,user=request.user).afirst()
 
         if not token:
             return Response({"RES": False,"msg": "Access token not found.","data": None})
@@ -178,7 +181,7 @@ class UpdateMyAccessToken(BaseClass):
                 return Response({"RES": False,"msg": "is_active must be true or false.","data": None})
             token.is_active = is_active
 
-        token.save()
+        await token.asave()
 
         return Response({
             "RES": True,
@@ -193,15 +196,15 @@ class UpdateMyAccessToken(BaseClass):
 
 class DeleteMyAccessToken(BaseClass):
 
-    def create(self, request):
+    async def create(self, request):
         id = request.data.get("id")
 
         if not id:
             return Response({"RES": False,"msg": "Token ID is required.","data": None})
 
-        token = CliToken.objects.filter(id=id,user=request.user).first()
+        token = await CliToken.objects.filter(id=id,user=request.user).afirst()
 
         if not token:
             return Response({"RES": False,"msg": "Access token not found.","data": None})
-        token.delete()
+        await token.adelete()
         return Response({"RES": True,"msg": "Access token deleted successfully.","data": None})

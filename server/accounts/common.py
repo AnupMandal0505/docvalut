@@ -1,4 +1,4 @@
-from rest_framework.viewsets import ViewSet
+from adrf.viewsets import ViewSet
 from rest_framework.authentication import TokenAuthentication,SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BaseAuthentication

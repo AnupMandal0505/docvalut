@@ -8,6 +8,7 @@ Read operations live in views.py.
 URL prefix: /logic/master/create/<basename>/
 """
 
+from asgiref.sync import sync_to_async
 from rest_framework.response import Response
 from accounts.common import BaseClass
 from repo.models import (Repository,)
@@ -23,7 +24,7 @@ class MyRepository(BaseClass):
     POST /logic/master/create/my-repository/
     """
 
-    def create(self, request):
+    async def create(self, request):
         name = request.data.get("name")
         description = request.data.get("description", "")
         icon = request.FILES.get("icon")
@@ -34,18 +35,19 @@ class MyRepository(BaseClass):
         name = name.strip()
         name = f"{request.user.username}/{name.strip()}"
 
-        if Repository.objects.filter(name=name).exists():
+        if await Repository.objects.filter(name=name).aexists():
             return Response({"RES": False, "msg": f"A repository named '{name}' already exists.", "data": ""})
 
-        repo = Repository.objects.create(name=name, description=description, icon=icon)
+        repo = await Repository.objects.acreate(name=name, description=description, icon=icon)
         serializer = RepositorySerializer(repo)
-        return Response({"RES": True, "msg": "Repository created.", "data": serializer.data})
+        data = await sync_to_async(lambda: serializer.data)()
+        return Response({"RES": True, "msg": "Repository created.", "data": data})
 
 class DeleteMyRepository(BaseClass):
     """
     POST /logic/master/create/delete-my-repository/
     """
 
-    def create(self, request):
+    async def create(self, request):
         print(request.data)
         return Response({"RES": True, "msg": "Deleted Repository."})
